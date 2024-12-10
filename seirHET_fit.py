@@ -21,6 +21,6 @@ def seirhet_fit(data_dates, data_cases, N, initial_guess):
     def wrapped_model(x, beta, gamma, alpha, p, E0):
         return solve_SEIRhet(x, beta, gamma, alpha, p, E0, N)
 
-    popt, _ = optimize.curve_fit(wrapped_model, data_dates, data_cases, p0=initial_guess, bounds=((0, 0, 0, 0, 0), (np.inf, np.inf, np.inf, np.inf, N)))
+    popt, _ = optimize.curve_fit(wrapped_model, data_dates, data_cases, p0=initial_guess, bounds=((0, 0, 0, 0, 0), (np.inf, 7, 7, np.inf, N)))
     fitted_values = wrapped_model(data_dates, *popt)
     return fitted_values, popt

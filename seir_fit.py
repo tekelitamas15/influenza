@@ -23,7 +23,7 @@ def seir_fit(data_dates, data_cases, N, initial_guess):
 
     popt, _ = optimize.curve_fit(
             wrapped_model, data_dates, data_cases, p0=initial_guess,
-            bounds=((0, 0, 0, 0), (np.inf, np.inf, np.inf, N))
+            bounds=((0, 0, 0, 0), (np.inf, 7, 7, N))
         )
     fitted_values = wrapped_model(data_dates, *popt)
     return fitted_values, popt
