@@ -1,51 +1,53 @@
 import pandas as pd
 import numpy as np
-from findparams import find_best_initial_guesses
-from findparams import get_best_fit_metrics
-from findparamsSEIR import get_best_fit_metricsSEIR
-from findparamsSEIR import find_best_initial_guessesSEIR
 import matplotlib.pyplot as plt
+from SEIRmodel import solve_SEIR
+from scipy import optimize
+from metrics import evaluate_fit
+from SEIR_fit import seir_fit
+from SEIRHET_fit import seirhet_fit
 
-# Load your data
+# Load and preprocess data
 df = pd.read_excel("Influnet_2004_2024_w_age.xlsx")
-data_dates = df["Date"][313:337].to_numpy()
-data_cases = df["positiveCasi"][313:337].to_numpy()
-population = np.average(df["Totale Assistiti"][313:337])
+data_dates = df["Date"][397:421].to_numpy()
+data_cases = df["positiveCasi"][397:421].to_numpy()
 
-# Define ranges for p and E0
-p_range = np.arange(0.1, 3.0, 0.1)  # Example range for p
-E0_range = np.arange(1, 100, 1)  # Example range for E0
-E0_rangemax = np.arange(1, 3000, 1) # Example range for E0 for fitting SEIR
-# Find the best initial guesses
-result = find_best_initial_guesses(data_dates, data_cases, population, p_range, E0_range)
-resultSEIR = find_best_initial_guessesSEIR(data_dates, data_cases, population, E0_rangemax)
-best_metrics = get_best_fit_metrics(result)
-best_metricsSEIR = get_best_fit_metricsSEIR(resultSEIR)
-# Print the results
-print("\nBest SEIR Fit Results:")
-print(f"Fitted values: {resultSEIR['best_initial_guess']}")
-print(f"Best R-squared Score: {resultSEIR['best_r2_score']:.4f}")
-print("Best Metrics:")
-for metric, value in resultSEIR['best_metrics'].items():
-    print(f"{metric}: {value:.4f}")
+# Define constants
+N = 59_500_000  # Total population size
+ur = 3.8  # Scaling factor for cases
 
-# Print the results
-print("\nBest SEIR-HET Fit Results:")
-print(f"Fitted values: {result['best_initial_guess']}")
-print(f"Best R-squared Score: {result['best_r2_score']:.4f}")
-print("Best Metrics:")
-for metric, value in result['best_metrics'].items():
-    print(f"{metric}: {value:.4f}")
 
-# Plot the best fit
-    plt.figure(figsize=(10, 6))
-    plt.plot(data_dates, data_cases, 'o', label="Observed Data")
-    plt.plot(data_dates, result["best_fitted_values"], '-', label="Best SEIR-HET Fit")
-    plt.plot(data_dates, resultSEIR["best_fitted_values"], linestyle='dashdot', label="Best SEIR Fit")
-    plt.title("Comparison of fitting SEIR and SEIR-HET Model, 2014-15")
-    plt.xlabel("Time")
-    plt.ylabel("Cases")
-    plt.legend()
-    plt.savefig('2014-15.jpg')
-    plt.show()
+# Initial parameter guesses
+initial_guess_seir = [5, 4, 4, 50_000, 20_000]  # [beta, gamma, alpha, E0]
+initial_guess_seirhet = [5, 4, 4, 1, 50_000, 20_000]  # [beta, gamma, alpha, p, E0]
+
+# Fit SEIR model
+fitted_values_seir, popt_seir = seir_fit(data_dates, ur * data_cases, N, initial_guess_seir)
+beta_seir, gamma_seir, alpha_seir, E0_seir, R0_seir = popt_seir
+
+# Fit SEIR-HET model
+fitted_values_seirhet, popt_seirhet = seirhet_fit(data_dates, ur * data_cases, N, initial_guess_seirhet)
+beta_seirhet, gamma_seirhet, alpha_seirhet, p_seirhet, E0_seirhet, R0_seirhet = popt_seirhet
+
+# Print fitted parameters
+print("SEIR Model Fitted Parameters:")
+print(f"Beta: {beta_seir}, Gamma: {gamma_seir}, Alpha: {alpha_seir}, E0: {E0_seir}, R0: {R0_seir}")
+print("Model Fit Evaluation:", evaluate_fit(ur * data_cases, fitted_values_seir))
+
+print("\nSEIR-HET Model Fitted Parameters:")
+print(f"Beta: {beta_seirhet}, Gamma: {gamma_seirhet}, Alpha: {alpha_seirhet}, p: {p_seirhet}, E0: {E0_seirhet}, R0: {R0_seirhet}")
+print("Model Fit Evaluation:", evaluate_fit(ur * data_cases, fitted_values_seirhet))
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.plot(data_dates, ur * data_cases, 'bo', label='Observed Cases')
+plt.plot(data_dates, fitted_values_seirhet, '-', label='Fitted SEIR-HET Model')
+plt.plot(data_dates, fitted_values_seir, 'r-', label='Fitted SEIR Model')
+plt.xlabel("Time")
+plt.ylabel("Cases")
+plt.legend()
+plt.title("SEIR Models Fit to Data")
+plt.savefig('fit16.jpg')
+plt.show()
+
 
