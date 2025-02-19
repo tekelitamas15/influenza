@@ -18,13 +18,14 @@ def seirhet_fit(data_dates, data_cases, N, initial_guess):
     """
 
     # Create a wrapper for the solve_SEIRhet function
-    def wrapped_model(x, beta, gamma, alpha, p, E0, R0):
-        return solve_SEIRhet(x, beta, gamma, alpha, p, E0, R0, N, ur = 3.8)
+    def wrapped_model(x, beta, gamma, alpha, p, E0):
+        return solve_SEIRhet(x, beta, gamma, alpha, p, E0, N, ur = 3.8)
 
     popt, _ = optimize.curve_fit(
         wrapped_model, data_dates, data_cases, p0=initial_guess,
-        bounds=((3, 4, 4, 0, 0, 0), (20, 4.1, 4.1, 10, N, N))
+        bounds=((3, 4, 4, 0, 0), (20, 4.1, 4.1, 10, N))
     )
 
     fitted_values = wrapped_model(data_dates, *popt)
     return fitted_values, popt
+
