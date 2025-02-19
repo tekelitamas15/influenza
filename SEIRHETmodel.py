@@ -27,7 +27,7 @@ def seirhet_model(y, x, beta, gamma, alpha, p, N):
     return S, E, I, R
 
 
-def solve_SEIRhet(x, beta, gamma, alpha, p, E0, R0, N, ur = 3.8):
+def solve_SEIRhet(x, beta, gamma, alpha, p, E0, N, ur = 3.8):
     """
     Solves the SEIR-HET model using numerical integration.
 
@@ -43,6 +43,7 @@ def solve_SEIRhet(x, beta, gamma, alpha, p, E0, R0, N, ur = 3.8):
     Returns:
         ndarray: Sum of the Exposed (E) and Infectious (I) compartments at each time point.
     """
+    R0 = 0
     I0 = E0
     S0 = N - E0 - I0 - R0
 
@@ -52,3 +53,5 @@ def solve_SEIRhet(x, beta, gamma, alpha, p, E0, R0, N, ur = 3.8):
     for i in range(1, len(results[:, 3])):
         diff.append(results[:, 3][i] - results[:, 3][i - 1])
     return diff
+
+
